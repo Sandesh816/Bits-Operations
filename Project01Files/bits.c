@@ -173,8 +173,9 @@ NOTES:
  *   Max ops: 8
  *   Rating: 1
  */
-int bitAnd(int x, int y) {
-  return 2;
+int bitAnd(int x, int y){
+       // (-a || -b) == -(a and b). So, one more not operation to get (a and b)                                                                                                                                       
+       return ~(~x | ~y);
 }
 /* 
  * bitOr - x|y using only ~ and & 
@@ -184,7 +185,9 @@ int bitAnd(int x, int y) {
  *   Rating: 1
  */
 int bitOr(int x, int y) {
-  return 2;
+  // - x & - y -> -(x | y). So, one more negative                                                                                                                                                                     
+  int tmp = ~x & ~y;
+  return ~tmp;
 }
 /* 
  * bitNor - ~(x|y) using only ~ and & 
@@ -194,7 +197,7 @@ int bitOr(int x, int y) {
  *   Rating: 1
  */
 int bitNor(int x, int y) {
-  return 2;
+  return ~x & ~y;
 }
 /* 
  * bitXor - x^y using only ~ and & 
@@ -204,7 +207,10 @@ int bitNor(int x, int y) {
  *   Rating: 1
  */
 int bitXor(int x, int y) {
-  return 2;
+  int a = x & ~y;
+  int b = ~x & y;
+  // Now, we want a | b. So, -(-a & -b)                                                                                                                                                                               
+  return ~(~a & ~b);
 }
 /* 
  * evenBits - return word with all even-numbered bits set to 1
@@ -213,7 +219,12 @@ int bitXor(int x, int y) {
  *   Rating: 1
  */
 int evenBits(void) {
-  return 2;
+  int start= 1;// I was tempted to use the number 85 that we mentioned in class                                                                                                                                       
+  start |= start << 2;
+  start |= start << 4;
+  start |= start << 8;
+  start |= start << 16;
+  return start;
 }
 /* 
  * minusOne - return a value of -1 
@@ -222,7 +233,8 @@ int evenBits(void) {
  *   Rating: 1
  */
 int minusOne(void) {
-  return 2;
+  // To get negative of a number, we flip everything first then add 1 at the end                                                                                                                                      
+  return (~1 + 1);
 }
 /* 
  * upperBits - pads n upper bits with 1's
@@ -233,7 +245,10 @@ int minusOne(void) {
  *  Rating: 1
  */
 int upperBits(int n) {
-  return 2;
+  // Idea: First get all 1s. Then, get lower 32 - n bits to 0. Initial idea for all 1s: start with base 1, then base |= base << 1, then 2 ... 16. But it will exceed 10 operations overall.                           
+  // So, I used ~0 to get all 1s as 0 is 000...000. So, ~0 = 111...111                                                                                                                                                
+  int tmp = !n + ~0;
+  return tmp << 32 + (~n + 1);
 }
 /* 
  * thirdBits - return word with every third bit (starting from the LSB) set to 1
@@ -242,7 +257,13 @@ int upperBits(int n) {
  *   Rating: 1
  */
 int thirdBits(void) {
-  return 2;
+  // Initial idea: start with base = 1, then base |= base << 3, 6, 12, 24                                                                                                                                             
+  int base = 1;
+  base |= base << 3;
+  base |= base << 6;
+  base |= base << 12;
+  base |= base << 24;
+  return base;
 }
 /* 
  * allEvenBits - return 1 if all even-numbered bits in word set to 1
@@ -252,7 +273,15 @@ int thirdBits(void) {
  *   Rating: 2
  */
 int allEvenBits(int x) {
-  return 2;
+  // Idea: first form a number that has all even bits 1                                                                                                                                                               
+  // then perform xor with x. It should result in all 0 if the number had all even bits 1. Then, return !result to get 1 in that case                                                                                 
+  int y = 1;
+  y |= y << 2;
+  y |= y << 4;
+  y |= y << 8;
+  y |= y << 16;
+  int result = (x & y) ^ y;// x&y will be equal to y only if x was also all even bits 1. Then, xor converts all bits to 0 only if x&y == y                                                                            
+  return !result;
 }
 /* 
  * anyOddBit - return 1 if any odd-numbered bit in word set to 1
@@ -262,7 +291,13 @@ int allEvenBits(int x) {
  *   Rating: 2
  */
 int anyOddBit(int x) {
-    return 2;
+  int y = 2;//want all odd bits are 1 and even bits 0                                                                                                                                                                 
+  y |= y << 2;
+  y |= y << 4;
+  y |= y << 8;
+  y |= y << 16;
+  int result = x & y;// now, all even bits are 0. If there was any odd bit of x set to 1, at least one bit of result will be 1. so, result != 0 in that case                                                          
+  return !(!result);// so, if any odd bit in x == 1. Then, result != 1. So, !result = 0. So, !(!result) == 1                                                                                                          
 }
 /* 
  * getByte - Extract byte n from word x
@@ -273,7 +308,11 @@ int anyOddBit(int x) {
  *   Rating: 2
  */
 int getByte(int x, int n) {
-  return 2;
+  // Idea: get x, then right shift 8*n bits. So, if n==0, dont right shift any, if n==1, right shift 8 and so on. Now, the byte we want is at the spot of LSB. Then, we form a number whose LSB is all 1s             
+  // and everything else is 0. Then, we & them and get the result                                                                                                                                                     
+  int shifted = x >> (n << 3);
+  int number = 255; //11111111                                                                                                                                                                                        
+  return shifted & number;
 }
 /* 
  * byteSwap - swaps the nth byte and the mth byte
@@ -285,7 +324,25 @@ int getByte(int x, int n) {
  *  Rating: 2
  */
 int byteSwap(int x, int n, int m) {
-    return 2;
+  // Idea: First, get the nth byte, then get the mth bute                                                                                                                                                             
+  // Then, Then, left shift those nth and mth byte to correct spot on different numbers. Then, get corresponding numbers by &ing them with all 1s. Then, & the original x   
+  int mthByte = (x >> (m << 3)) & 255;// 255 = 11111111 everything else 0s
+  int nthByte = (x >> (n << 3)) & 255;
+
+ // Now, shift them to correct places
+  int swapMthByte = mthByte << (n << 3);
+  int swapNthByte = nthByte << (m << 3);
+
+  // Now, we clear the mth and nth byte position in x                                                                                                                                                                 
+  int clearMthByte = ~(255 << (m << 3));
+  int clearNthByte = ~(255 << (n << 3));
+  x &= clearMthByte;
+  x &= clearNthByte;
+ // now, we just add te swappedBytes
+  x |= swapMthByte;
+  x |= swapNthByte;
+
+  return x;
 }
 /* 
  * negate - return -x 
@@ -295,7 +352,7 @@ int byteSwap(int x, int n, int m) {
  *   Rating: 2
  */
 int negate(int x) {
-  return 2;
+  return (~x + 1);
 }
 /* 
  * bitMask - Generate a mask consisting of all 1's 
@@ -308,7 +365,17 @@ int negate(int x) {
  *   Rating: 3
  */
 int bitMask(int highbit, int lowbit) {
-  return 2;
+  // first, we want to know if highbit > lowbit or not                                                                                                                                                                
+  int isValid = highbit + (~lowbit + 1);// We will use this at the end                                                                                                                                                
+  // Now, first I want to get 111..111 left shifted by highbit + 1 (to include 0th index), then flip them all to have lowest highbits 1 and everything else 0                                                         
+  int highMask = (~0 << highbit) << 1;
+  highMask = ~highMask;
+  int reverseLowMask = ~0 << lowbit;// now if I do &                                                                                                                                                                  
+
+  int result = highMask & reverseLowMask;
+  // we want to return all 0s if isValid was -ve and result if isValid is +ve or 0                                                                                                                                    
+  isValid = isValid >> 31;// if the MSB was 1 (to show -ve), I have right shifted by 31. So, it is all 1s now. if the isValid was 0, it is all 0s now                                                                 
+  return ~isValid & result;
 }
 /* 
  * conditional - same as x ? y : z 
@@ -318,7 +385,12 @@ int bitMask(int highbit, int lowbit) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-  return 2;
+  // if x is != 0, return y else return z                                                                                                                                                                             
+  int helper = !!x;// So, if x was not zero, now helper is 1. if x was 0, helper is 0.                                                                                                                                
+  helper = (~helper + 1);
+  // if helper was 1, now we converted it to 111..111. And, if helper was 0, we converted it to 000..000 by flipping all and adding 1, causing 31st bit th 1 to overflow                                              
+  return (y & helper) | (z & ~helper);
+  // if helper is all 1111, in that case we want to return y. And, if helper is 000..000, we want to return z.                                                                                                        
 }
 /* 
  * rotateRight - Rotate x to the right by n
@@ -329,7 +401,17 @@ int conditional(int x, int y, int z) {
  *   Rating: 3 
  */
 int rotateRight(int x, int n) {
-  return 2;
+  // lets say we have to rotate 010101 by 1 -> 101010.                                                                                                                                                                
+  // idea: first grab the lowest n bit, in this case 1. make it 100000                                                                                                                                                
+  // then, gragb the highest 32-n bits. in this case -> 001010                                                                                                                                                        
+  // then, just or the results -> 101010                                                                                                                                                                              
+
+  int lowest = x << (32 + (~n + 1)); // in our example x left shifted by 31                                                                                                                                           
+  int highest = x >> n;
+  int check = !n + ~0;
+  check =  ~(check << 32+(~n+1));
+  highest = highest & check;
+  return lowest | highest;
 }
 /* 
  * subOK - Determine if can compute x-y without overflow
@@ -340,7 +422,14 @@ int rotateRight(int x, int n) {
  *   Rating: 3
  */
 int subOK(int x, int y) {
-  return 2;
+  //from my understanding,  case for bit overflow, if x & y have different signs and x - y dont have the same sign as x                                                                                               
+  int sub = x + (~y + 1);
+  int xSign = x >> 31;
+  int ySign = y >> 31;
+  int subSign = sub >> 31;
+
+  int overflow = (xSign ^ ySign) & (xSign ^ subSign);// if x and y have same sign -> no overflow or if x and sub have same sign -> no overflow                                                                        
+  return !overflow;
 }
 /* 
  * absVal - absolute value of x
@@ -351,7 +440,12 @@ int subOK(int x, int y) {
  *   Rating: 4
  */
 int absVal(int x) {
-  return 2;
+  int xSign = x >> 31;
+  // if xSign is all 1s, it means the number was negative and if xSign is all 0s, the number was positive                                                                                                             
+  // xSign = 0 or -1                                                                                                                                                                                                  
+  return (x ^ xSign) + (~xSign + 1);
+  // if xSign is -1, then xor with x gives us with all those 1s flipped to 0, but it results in value 1 less eg: -3 -> 2. in that case, ~xSign gives us all 0, + 1 gives us 1. So, 2 + 1 = 3                          
+  // if xSign is 0, then xor with x leaves us x. Then, ~xSign is all 1s, we add 1. So, all 0s added to x is x                                                                                                         
 }
 /*
  * bitCount - returns count of number of 1's in word
